@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -17,6 +18,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// used for scraping the images from wiki.dominionstrategry.com
 Route::get('/images', function() {
     $cardImages = [];
     $client = app()->make(\GuzzleHttp\Client::class);
@@ -39,15 +41,13 @@ Route::post('/slack', function(\Illuminate\Http\Request $request){
     $payload = $request->json();
 
     if ($payload->get('type') === 'url_verification') {
-        \Log::info($payload->get('challenge'));
         return $payload->get('challenge');
     } else {
         $event = $payload->get('event');
         $channel = $event['channel'];
-        \Log::info($event['text']);
 
         if(isset($event['bot_id']) && $event['bot_id'] == 'B012ZRKSFLP') {
-            \Log::info('this is me reacting to my own message');
+            return;
         } else {
 
             $cards = [];
@@ -70,10 +70,9 @@ Route::post('/slack', function(\Illuminate\Http\Request $request){
             }
 
             if(!empty($cards)) {
-                $httpClient = app()->make(\GuzzleHttp\Client::class);
                 $headers = [
                     'Accept' => 'application/json',
-                    'Authorization' => 'Bearer ' . 'xoxb-3665960514-1109879133494-o0ujPU2mcsI6p49ISStYy5FP',
+                    'Authorization' => 'Bearer ' . env('BOT_USER_ACCESS_TOKEN'),
                 ];
 
                 $blocks = [];
@@ -92,11 +91,6 @@ Route::post('/slack', function(\Illuminate\Http\Request $request){
                             'type' => 'mrkdwn',
                             'text' => $card['card_name'] . ': ' . $card['card_wiki'] . ', ' . $card['card_image'],
                         ],
-                        // 'accessory' => [
-                        //     "type" => 'image',
-                        //     "image_url" => $card['image'],
-                        //     "alt_text" => $card['alt_text'],
-                        // ],
                     ];
                 }
 
@@ -111,19 +105,11 @@ Route::post('/slack', function(\Illuminate\Http\Request $request){
                     'json' => $formParams,
                 ];
 
-                $response = $httpClient->post('https://slack.com/api/chat.postMessage', $params);
-
-                \Log::info($response->getBody()->getContents());
+                $httpClient = app()->make(\GuzzleHttp\Client::class);
+                $httpClient->post('https://slack.com/api/chat.postMessage', $params);
             }
-
-
         }
-
-
-
     }
-
-    // Bot logic will be placed here
 });
 
 Route::middleware('web')->get('/login/slack', function(){
@@ -131,6 +117,7 @@ Route::middleware('web')->get('/login/slack', function(){
         ->scopes(['bot'])
         ->redirect();
 });
+
 Route::middleware('web')->get('/connect/slack', function(\GuzzleHttp\Client $httpClient){
     $response = $httpClient->post('https://slack.com/api/oauth.access', [
         'headers' => ['Accept' => 'application/json'],
@@ -141,6 +128,6 @@ Route::middleware('web')->get('/connect/slack', function(\GuzzleHttp\Client $htt
             'redirect_uri' => env('SLACK_REDIRECT_URI'),
         ]
     ]);
-	$bot_token = json_decode($response->getBody())->bot->bot_access_token;
-    echo "Your Bot Token is: ". $bot_token. " place it inside your .env as SLACK_TOKEN";
+    $token = json_decode($response->getBody())->bot->bot_access_token;
+	echo $token;
 });
