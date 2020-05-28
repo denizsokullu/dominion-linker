@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\CardFinder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
@@ -37,81 +38,8 @@ Route::get('/images', function() {
     dd($cardImages);
 });
 
-Route::post('/slack', function(\Illuminate\Http\Request $request){
-
-    $payload = $request->json();
-
-    if ($payload->get('type') === 'url_verification') {
-        return $payload->get('challenge');
-    } else {
-        $event = $payload->get('event');
-        $channel = $event['channel'];
-
-        if(isset($event['bot_id']) && $event['bot_id'] == 'B012ZRKSFLP') {
-            return;
-        } else {
-
-            $cards = [];
-            $dominionUrl = 'http://wiki.dominionstrategy.com/index.php/';
-            foreach(config('cards') as $card) {
-                if(Str::contains($event['text'], $card)) {
-                    $cardName = str_replace(' ', '_', $card);
-                    $cardImage = "<$dominionUrl$card|Wiki>";
-                    $cardUrl = config("card_images.$card");
-                    $cardWiki = "<$cardUrl|Card>";
-
-                    $cards[] = [
-                        'card_name' => $card,
-                        'card_image' => $cardImage,
-                        'image' => $cardUrl,
-                        'alt_text' => $card,
-                        'card_wiki' => $cardWiki
-                    ];
-                }
-            }
-
-            if(!empty($cards)) {
-                $headers = [
-                    'Accept' => 'application/json',
-                    'Authorization' => 'Bearer ' . env('BOT_USER_ACCESS_TOKEN'),
-                ];
-
-                $blocks = [];
-                $blocks[] = [
-                    'type' => 'section',
-                    'text' => [
-                        'type' => 'mrkdwn',
-                        'text' => 'Here are the cards you mentioned:'
-                    ]
-                ];
-
-                foreach($cards as $card) {
-                    $blocks[] = [
-                        'type' => 'section',
-                        'text' => [
-                            'type' => 'mrkdwn',
-                            'text' => $card['card_name'] . ': ' . $card['card_wiki'] . ', ' . $card['card_image'],
-                        ],
-                    ];
-                }
-
-                $formParams = [
-                    'channel' => $channel,
-                    'unfurl_media' => false,
-                    'blocks' => $blocks
-                ];
-
-                $params = [
-                    'headers' => $headers,
-                    'json' => $formParams,
-                ];
-
-                $httpClient = app()->make(\GuzzleHttp\Client::class);
-                $httpClient->post('https://slack.com/api/chat.postMessage', $params);
-            }
-        }
-    }
-});
+Route::get('/test/message', 'TestController@message');
+Route::post('/slack', 'SlackController@handleEvent');
 
 Route::middleware('web')->get('/login/slack', function(){
     return Socialite::with('slack')
