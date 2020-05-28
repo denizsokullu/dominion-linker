@@ -16,4 +16,8 @@ class TestController extends Controller
 
     return response()->json($cards);
   }
+
+  public function returnEmpty() {
+    return response()->json([]);
+  }
 }

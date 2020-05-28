@@ -39,6 +39,7 @@ Route::get('/images', function() {
 });
 
 Route::get('/test/message', 'TestController@message');
+Route::get('/test/empty', 'TestController@returnEmpty');
 Route::post('/slack', 'SlackController@handleEvent');
 
 Route::middleware('web')->get('/login/slack', function(){
