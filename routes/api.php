@@ -38,7 +38,7 @@ Route::get('/images', function() {
     dd($cardImages);
 });
 
-Route::get('/test/message', 'TestController@message');
+Route::post('/test/message', 'TestController@message');
 Route::get('/test/empty', 'TestController@returnEmpty');
 Route::post('/slack', 'SlackController@handleEvent');
 
