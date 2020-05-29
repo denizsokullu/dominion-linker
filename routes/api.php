@@ -41,6 +41,7 @@ Route::get('/images', function() {
 Route::post('/test/message', 'TestController@message');
 Route::get('/test/empty', 'TestController@returnEmpty');
 Route::post('/slack', 'SlackController@handleEvent');
+Route::post('/slack/commands/random_card', 'SlackController@randomCardCommand');
 
 Route::middleware('web')->get('/login/slack', function(){
     return Socialite::with('slack')

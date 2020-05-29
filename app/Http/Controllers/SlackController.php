@@ -63,4 +63,19 @@ class SlackController extends Controller
         }
     }
   }
+
+    public function randomCardCommand(CardFinder $cardFinder) {
+        $card = $cardFinder->getRandomCard();
+        return response()->json([
+            'blocks' => [
+                    [
+                    'type' => 'section',
+                    'text' => [
+                        'type' => 'mrkdwn',
+                        'text' => $card['card_name'] . ': ' . $card['card_wiki'] . ', ' . $card['card_image'],
+                    ],
+                ]
+            ]
+        ]);
+    }
 }

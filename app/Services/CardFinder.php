@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Arr;
+
 class CardFinder {
 
   const DOMINION_WIKI_URL = 'http://wiki.dominionstrategy.com/index.php/';
@@ -12,14 +14,19 @@ class CardFinder {
     foreach(config('cards') as $card) {
         if(preg_match("/\b".strtolower($card)."\b/i", strtolower($message), $matches)) {
           $message = str_replace($card, '', $message);
-          $cards[] = $this->addToCards($card);
+          $cards[] = $this->generateCardData($card);
         }
     }
 
     return $cards;
   }
 
-  private function addToCards($card) {
+  public function getRandomCard() {
+    $card = Arr::random(config('cards'));
+    return $this->generateCardData($card);
+  }
+
+  private function generateCardData($card) {
     $dominionUrl = self::DOMINION_WIKI_URL;
     $cardImage = "<$dominionUrl$card|Wiki>";
     $cardUrl = config("card_images.$card");
