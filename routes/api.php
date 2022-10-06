@@ -25,17 +25,21 @@ Route::get('/images', function() {
     $cardImages = [];
     $client = app()->make(\GuzzleHttp\Client::class);
 
+    $file = fopen("/Users/dsokullu/projects/dominion-linker/cards", "w");
+
     foreach(config('cards') as $card) {
-        $cardName = str_replace(' ', '_', $card);
+        $cardName = urlencode(str_replace(' ', '_', $card));
         $response = $client->get("http://wiki.dominionstrategy.com/index.php/File:$cardName.jpg");
         $html = new DOMDocument;
         @$html->loadHTML($response->getBody()->getContents());
         $url = $html->getElementById('file')->getElementsByTagName('img')[0]->getAttribute('src');
-        $fullUrl = 'http://wiki.dominionstrategy.com/index.php' . $url;
+        $fullUrl = 'http://wiki.dominionstrategy.com/' . $url;
         $cardImages[$card] = $fullUrl;
+
+        fwrite($file, "\"{$card}\" => \"{$fullUrl}\",\n");
     }
 
-    dd($cardImages);
+    fclose($file);
 });
 
 Route::post('/test/message', 'TestController@message');
